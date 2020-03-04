@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+
 """
 Logpuzzle exercise
 
@@ -12,7 +13,11 @@ http://code.google.com/edu/languages/google-python-class/
 Given an apache logfile, find the puzzle urls and download the images.
 
 Here's what a puzzle url looks like:
-10.254.254.28 - - [06/Aug/2007:00:13:48 -0700] "GET /~foo/puzzle-bar-aaab.jpg HTTP/1.0" 302 528 "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6"
+10.254.254.28 - - [06/Aug/2007:00:13:48 -0700] "GET /~foo/puzzle-bar-aaab.jpg
+HTTP/1.0"
+302 528 "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6)
+Gecko/20070725
+Firefox/2.0.0.6"
 
 """
 
@@ -29,7 +34,22 @@ def read_urls(filename):
     Screens out duplicate urls and returns the urls sorted into
     increasing order."""
     # +++your code here+++
-    pass
+    puzzle_urls = []
+    full_urls = []
+    # Read the file, and go through with a regex
+    with open(filename) as f:
+        for line in f:
+            url = re.findall(r'(\S*puzzle\S*.jpg)', line)
+            if url and url[0] not in puzzle_urls:
+                puzzle_urls.append(url[0])
+    # Sort to ensure the 2nd file pictures work for the landmark
+        puzzle_urls.sort(
+            key=lambda x: re.search(r'\w[^-]*$', x).group(0))
+    # Go back through and add the rest of the urls
+        for item in puzzle_urls:
+            new_items = 'http://code.google.com{}'.format(item)
+            full_urls.append(new_items)
+    return full_urls
 
 
 def download_images(img_urls, dest_dir):
@@ -40,14 +60,24 @@ def download_images(img_urls, dest_dir):
     with an img tag to show each local image file.
     Creates the directory if necessary.
     """
-    # +++your code here+++
-    pass
+    if not os.path.exists(str(dest_dir)):
+        os.mkdir(dest_dir)
+    print('Retreiving...')
+    with open(str(dest_dir) + "/index.html", 'w') as file:
+        file.write("<html><body>")
+        for index, url in enumerate(img_urls):
+            urllib.urlretrieve(url, filename=dest_dir +
+                               '/img' + str(index) + ".jpg")
+            file.write("<img src='img" + str(index) + ".jpg' >")
+        file.write("</body></html>")
+    return
 
 
 def create_parser():
     """Create an argument parser object"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--todir',  help='destination directory for downloaded images')
+    parser.add_argument(
+        '-d', '--todir',  help='destination directory for downloaded images')
     parser.add_argument('logfile', help='apache logfile to extract urls from')
 
     return parser
